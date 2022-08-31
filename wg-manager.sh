@@ -21,6 +21,7 @@ function usage {
   echo " -q : Print user QR code"
   echo " -u <user> : User identifier (uniq field for vpn account)"
   echo " -s <server> : Server host for user connection"
+  echo " -I : Interface (default eth0)"
   echo " -h : Usage"
   exit 1
 }
@@ -28,7 +29,13 @@ function usage {
 unset USER
 umask 0077
 
-while getopts ":icdpqhLUu:s:" opt; do
+HOME_DIR="/etc/wireguard"
+SERVER_NAME="wg-server"
+SERVER_IP_PREFIX="10.10.10"
+SERVER_PORT=39547
+SERVER_INTERFACE="eth0" # ens4
+
+while getopts ":icdpqhLUu:I:s:" opt; do
   case $opt in
      i) INIT=1 ;;
      c) CREATE=1 ;;
@@ -38,6 +45,7 @@ while getopts ":icdpqhLUu:s:" opt; do
      p) PRINT_USER_CONFIG=1 ;;
      q) PRINT_QR_CODE=1 ;;
      u) USER="$OPTARG" ;;
+     I) SERVER_INTERFACE="$OPTARG" ;;
      h) usage ;;
      s) SERVER_ENDPOINT="$OPTARG" ;;
     \?) echo "Invalid option: -$OPTARG" ; exit 1 ;;
@@ -46,12 +54,6 @@ while getopts ":icdpqhLUu:s:" opt; do
 done
 
 [ $# -lt 1 ] && usage
-
-HOME_DIR="/etc/wireguard"
-SERVER_NAME="wg-server"
-SERVER_IP_PREFIX="10.10.10"
-SERVER_PORT=39547
-SERVER_INTERFACE="eth0" # ens4
 
 function reload_server {
     wg syncconf ${SERVER_NAME} <(wg-quick strip ${SERVER_NAME})
@@ -110,14 +112,10 @@ function init {
     mkdir -p "keys/${SERVER_NAME}"
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
-    if [ -f "keys/${SERVER_NAME}/private.key" ]; then
-        echo "Server has already been initialized"
-        exit 0
+    if [ ! -f "keys/${SERVER_NAME}/private.key" ]; then
+        echo -n "1" > "keys/.last_ip"
+        wg genkey | tee "keys/${SERVER_NAME}/private.key" | wg pubkey > "keys/${SERVER_NAME}/public.key"
     fi
-
-    echo -n "1" > "keys/.last_ip"
-
-    wg genkey | tee "keys/${SERVER_NAME}/private.key" | wg pubkey > "keys/${SERVER_NAME}/public.key"
 
     SERVER_PVT_KEY=$(cat "keys/$SERVER_NAME/private.key")
 
@@ -136,7 +134,7 @@ EOF
     sysctl -p
 
     systemctl enable wg-quick@${SERVER_NAME}
-    wg-quick up ${SERVER_NAME}
+    wg-quick up ${SERVER_NAME} || true
 
     echo "Server initialized successfully"
     exit 0

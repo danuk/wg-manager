@@ -18,6 +18,7 @@ echo "EVENT=$EVENT"
 case $EVENT in
     INIT)
         SERVER_HOST="{{ server.settings.host_name }}"
+        SERVER_INTERFACE="{{ server.settings.host_interface }}"
         if [ -z $SERVER_HOST ]; then
             echo "ERROR: set variable 'host_name' to server settings"
             exit 1
@@ -40,7 +41,11 @@ case $EVENT in
         cd /etc/wireguard
         $CURL -s --fail-with-body https://danuk.github.io/wg-manager/wg-manager.sh > $WG_MANAGER
         chmod 700 $WG_MANAGER
-        $WG_MANAGER -i -s $SERVER_HOST
+        if [ $SERVER_INTERFACE ]; then
+            $WG_MANAGER -i -s $SERVER_HOST -I $SERVER_INTERFACE
+        else
+            $WG_MANAGER -i -s $SERVER_HOST
+        fi
         ;;
     CREATE)
         USER_CFG=$($WG_MANAGER -u "{{ us.id }}" -c -p)
