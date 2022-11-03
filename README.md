@@ -25,7 +25,7 @@ Run server (bare-metal or VPS) with Ubuntu 22.02
 ### Install WireGuard
 
 ```bash
-apt install wireguard wireguard-tools -y
+apt install wireguard wireguard-tools qrencode -y
 ```
 
 ### Setup
@@ -35,5 +35,5 @@ apt install wireguard wireguard-tools -y
  - Add your user: `./wg-manager.sh -c -u my_user -p > wg-client.conf`
  - Install WireGuard on the client
  - Start client with config `wg-client.conf`
- 
- 
+
+
