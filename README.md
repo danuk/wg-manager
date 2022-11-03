@@ -26,7 +26,7 @@ apt install wireguard wireguard-tools -y
 
 ### Setup
 
- - Download this script (wg-manager.sh) from GitHub
+ - Download this script [wg-manager.sh](https://danuk.github.io/wg-manager/wg-manager.sh) from GitHub
  - Initialize WireGuard server: `./wg-manager.sh -i -s YOUR_SERVER_IP`
  - Add your user: `./wg-manager.sh -c -u my_user -p > wg-client.conf`
  - Install WireGuard on the client
