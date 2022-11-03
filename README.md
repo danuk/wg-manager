@@ -2,6 +2,9 @@
 
 WireGuard manager allow initialize WireGuard server and manage users.
 
+You can start the WireGuard server with one command, and then create (and delete) users.
+
+
 ```bash
 Usage: ./wg-manager.sh [<options>] [command [arg]]
 Options:
