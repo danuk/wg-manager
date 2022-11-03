@@ -12,6 +12,7 @@ Options:
  -c : Create new user
  -d : Delete user
  -p : Print user config
+ -q : Print user QR code
  -u <user> : User identifier (uniq field for vpn account)
  -s <server> : Server host for user connection
  -h : Usage

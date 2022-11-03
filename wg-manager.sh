@@ -14,6 +14,7 @@ function usage {
   echo " -c : Create new user"
   echo " -d : Delete user"
   echo " -p : Print user config"
+  echo " -q : Print user QR code"
   echo " -u <user> : User identifier (uniq field for vpn account)"
   echo " -s <server> : Server host for user connection"
   echo " -h : Usage"
@@ -23,12 +24,13 @@ function usage {
 unset USER
 umask 0077
 
-while getopts ":icdphu:s:" opt; do
+while getopts ":icdpqhu:s:" opt; do
   case $opt in
      i) INIT=1 ;;
      c) CREATE=1 ;;
      d) DELETE=1 ;;
      p) PRINT_USER_CONFIG=1 ;;
+     q) PRINT_QR_CODE=1 ;;
      u) USER="$OPTARG" ;;
      h) usage ;;
      s) SERVER_ENDPOINT="$OPTARG" ;;
@@ -168,6 +170,8 @@ fi
 
 if [ $PRINT_USER_CONFIG ]; then
     cat "${HOME_DIR}/keys/${USER}/${USER}.conf"
+elif [ $PRINT_QR_CODE ]; then
+    qrencode -t ansiutf8 < "${HOME_DIR}/keys/${USER}/${USER}.conf"
 fi
 
 exit 0
