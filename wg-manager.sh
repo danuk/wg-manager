@@ -57,6 +57,8 @@ function init {
         exit 1
     fi
 
+    echo -n "$SERVER_ENDPOINT" > "keys/.server"
+
     if [ -f "keys/${SERVER_NAME}/private.key" ]; then
         echo "ERROR: Server has already been initialized"
         exit 0
@@ -65,7 +67,6 @@ function init {
     mkdir -p "$HOME_DIR/keys/${SERVER_NAME}"
 
     echo -n "1" > "keys/.last_ip"
-    echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
     wg genkey | tee "keys/${SERVER_NAME}/private.key" | wg pubkey > "keys/${SERVER_NAME}/public.key"
 
