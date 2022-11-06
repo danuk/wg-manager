@@ -1,8 +1,10 @@
 #!/bin/bash -e
 
-LOCKFILE="/tmp/$0.lock"
+APP=$(basename $0)
+LOCKFILE="/tmp/$APP.lock"
+
 trap "rm -f ${LOCKFILE}; exit" INT TERM EXIT
-if ! ln -s $0 $LOCKFILE 2>/dev/null; then
+if ! ln -s $APP $LOCKFILE 2>/dev/null; then
     echo "ERROR: script LOCKED"
     exit 15
 fi
@@ -57,14 +59,13 @@ function init {
         exit 1
     fi
 
+    mkdir -p "$HOME_DIR/keys/${SERVER_NAME}"
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
     if [ -f "keys/${SERVER_NAME}/private.key" ]; then
         echo "ERROR: Server has already been initialized"
         exit 0
     fi
-
-    mkdir -p "$HOME_DIR/keys/${SERVER_NAME}"
 
     echo -n "1" > "keys/.last_ip"
 
