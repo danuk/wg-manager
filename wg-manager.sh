@@ -63,7 +63,7 @@ function init {
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
     if [ -f "keys/${SERVER_NAME}/private.key" ]; then
-        echo "ERROR: Server has already been initialized"
+        echo "Server has already been initialized"
         exit 0
     fi
 
