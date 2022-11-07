@@ -15,6 +15,8 @@ function usage {
   echo " -i : Init (Create server keys and configs)"
   echo " -c : Create new user"
   echo " -d : Delete user"
+  echo " -L : Lock user"
+  echo " -U : Unlock user"
   echo " -p : Print user config"
   echo " -q : Print user QR code"
   echo " -u <user> : User identifier (uniq field for vpn account)"
@@ -26,11 +28,13 @@ function usage {
 unset USER
 umask 0077
 
-while getopts ":icdpqhu:s:" opt; do
+while getopts ":icdpqhLUu:s:" opt; do
   case $opt in
      i) INIT=1 ;;
      c) CREATE=1 ;;
      d) DELETE=1 ;;
+     L) LOCK=1 ;;
+     U) UNLOCK=1 ;;
      p) PRINT_USER_CONFIG=1 ;;
      q) PRINT_QR_CODE=1 ;;
      u) USER="$OPTARG" ;;
@@ -51,6 +55,47 @@ SERVER_INTERFACE="eth0" # ens4
 
 function reload_server {
     wg syncconf ${SERVER_NAME} <(wg-quick strip ${SERVER_NAME})
+}
+
+function get_new_ip {
+    LAST_IP=$[$(cat "keys/.last_ip") + 1]
+    if [ $LAST_IP -gt 255 ]; then
+        echo "ERROR: can't determine new address"
+        exit 3
+    fi
+
+    echo -n "${LAST_IP}" > "keys/.last_ip"
+    echo "${SERVER_IP_PREFIX}.${LAST_IP}/32"
+}
+
+function add_user_to_server {
+    local USER=$1
+
+    if [ ! -f "keys/${USER}/public.key" ]; then
+        echo "ERROR: User not exists"
+        exit 1
+    fi
+
+    local USER_PUB_KEY=$(cat "keys/${USER}/public.key")
+    local USER_IP=$( get_new_ip )
+
+    if grep "# BEGIN ${USER}$" "$HOME_DIR/$SERVER_NAME.conf" >/dev/null ; then
+        echo "User already exists"
+        exit 0
+    fi
+
+cat <<EOF >> "$HOME_DIR/$SERVER_NAME.conf"
+# BEGIN ${USER}
+[Peer]
+PublicKey = ${USER_PUB_KEY}
+AllowedIPs = ${USER_IP}
+# END ${USER}
+EOF
+}
+
+function remove_user_from_server {
+    local USER=$1
+    sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "${HOME_DIR}/$SERVER_NAME.conf"
 }
 
 function init {
@@ -100,15 +145,7 @@ function create {
     fi
 
     SERVER_ENDPOINT=$(cat "keys/.server")
-
-    LAST_IP=$[$(cat "keys/.last_ip") + 1]
-    if [ $LAST_IP -gt 255 ]; then
-        echo "ERROR: can't determine new address"
-        exit 3
-    fi
-
-    echo -n "${LAST_IP}" > "keys/.last_ip"
-    USER_IP="${SERVER_IP_PREFIX}.${LAST_IP}/32"
+    USER_IP=$( get_new_ip )
 
     mkdir "keys/${USER}"
     wg genkey | tee "keys/${USER}/private.key" | wg pubkey > "keys/${USER}/public.key"
@@ -116,15 +153,6 @@ function create {
     USER_PVT_KEY=$(cat "keys/${USER}/private.key")
     USER_PUB_KEY=$(cat "keys/${USER}/public.key")
     SERVER_PUB_KEY=$(cat "keys/$SERVER_NAME/public.key")
-
-cat <<EOF >> "$HOME_DIR/$SERVER_NAME.conf"
-# BEGIN ${USER}
-[Peer]
-PublicKey = ${USER_PUB_KEY}
-AllowedIPs = ${USER_IP}
-# END ${USER}
-
-EOF
 
 cat <<EOF > "${HOME_DIR}/keys/${USER}/${USER}.conf"
 [Interface]
@@ -139,6 +167,7 @@ PersistentKeepalive = 20
 AllowedIPs = 0.0.0.0/0
 EOF
 
+    add_user_to_server $USER
     reload_server
 }
 
@@ -164,8 +193,20 @@ if [ $CREATE ]; then
 fi
 
 if [ $DELETE ]; then
-    sed -i "/# BEGIN ${USER}/,/# END ${USER}/d" "${HOME_DIR}/$SERVER_NAME.conf"
     rm -rf "${HOME_DIR}/keys/${USER}"
+    remove_user_from_server $USER
+    reload_server
+    exit 0
+fi
+
+if [ $LOCK ]; then
+    remove_user_from_server $USER
+    reload_server
+    exit 0
+fi
+
+if [ $UNLOCK ]; then
+    add_user_to_server $USER
     reload_server
     exit 0
 fi
