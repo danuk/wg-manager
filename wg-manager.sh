@@ -69,8 +69,6 @@ function get_new_ip {
 }
 
 function add_user_to_server {
-    local USER=$1
-
     if [ ! -f "keys/${USER}/public.key" ]; then
         echo "ERROR: User not exists"
         exit 1
@@ -94,7 +92,6 @@ EOF
 }
 
 function remove_user_from_server {
-    local USER=$1
     sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "${HOME_DIR}/$SERVER_NAME.conf"
 }
 
@@ -167,7 +164,7 @@ PersistentKeepalive = 20
 AllowedIPs = 0.0.0.0/0
 EOF
 
-    add_user_to_server $USER
+    add_user_to_server
     reload_server
 }
 
@@ -194,19 +191,19 @@ fi
 
 if [ $DELETE ]; then
     rm -rf "${HOME_DIR}/keys/${USER}"
-    remove_user_from_server $USER
+    remove_user_from_server
     reload_server
     exit 0
 fi
 
 if [ $LOCK ]; then
-    remove_user_from_server $USER
+    remove_user_from_server
     reload_server
     exit 0
 fi
 
 if [ $UNLOCK ]; then
-    add_user_to_server $USER
+    add_user_to_server
     reload_server
     exit 0
 fi
