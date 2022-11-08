@@ -43,13 +43,13 @@ case $EVENT in
         $WG_MANAGER -i -s $SERVER_HOST
         ;;
     CREATE)
-        USER_CFG=$($WG_MANAGER -c "{{ us.id }}" -p)
+        USER_CFG=$($WG_MANAGER -u "{{ us.id }}" -c -p)
 
         $CURL -s --fail-with-body -XPUT \
             -H "session-id: $SESSION_ID" \
             -H "Content-Type: text/plain" \
             {{ config.api.url }}/shm/v1/storage/manage/vpn \
-            --data-binary @"/etc/wireguard/keys/{{ us.id }}/{{ us.id }}.conf"
+            --data-binary "$USER_CFG"
         echo "done"
         ;;
     ACTIVATE)
