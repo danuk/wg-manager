@@ -5,7 +5,7 @@ LOCKFILE="/tmp/$APP.lock"
 
 trap "rm -f ${LOCKFILE}; exit" INT TERM EXIT
 if ! ln -s $APP $LOCKFILE 2>/dev/null; then
-    echo "ERROR: script LOCKED"
+    echo "ERROR: script LOCKED" >&2
     exit 15
 fi
 
@@ -60,7 +60,7 @@ function reload_server {
 function get_new_ip {
     LAST_IP=$[$(cat "keys/.last_ip") + 1]
     if [ $LAST_IP -gt 255 ]; then
-        echo "ERROR: can't determine new address"
+        echo "ERROR: can't determine new address" >&2
         exit 3
     fi
 
@@ -70,7 +70,7 @@ function get_new_ip {
 
 function add_user_to_server {
     if [ ! -f "keys/${USER}/public.key" ]; then
-        echo "ERROR: User not exists"
+        echo "ERROR: User not exists" >&2
         exit 1
     fi
 
@@ -97,7 +97,7 @@ function remove_user_from_server {
 
 function init {
     if [ -z "$SERVER_ENDPOINT" ]; then
-        echo "ERROR: Server required"
+        echo "ERROR: Server required" >&2
         exit 1
     fi
 
@@ -137,7 +137,7 @@ EOF
 
 function create {
     if [ -f "${HOME_DIR}/keys/${USER}/${USER}.conf" ]; then
-        echo "ERROR: user already exists"
+        echo "ERROR: user already exists" >&2
         exit 1
     fi
 
@@ -176,12 +176,12 @@ if [ $INIT ]; then
 fi
 
 if [ ! -f "keys/$SERVER_NAME/public.key" ]; then
-    echo "ERROR: Run init script before"
+    echo "ERROR: Run init script before" >&2
     exit 2
 fi
 
 if [ -z "${USER}" ]; then
-    echo "ERROR: User required"
+    echo "ERROR: User required" >&2
     exit 1
 fi
 
