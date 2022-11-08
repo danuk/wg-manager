@@ -48,7 +48,7 @@ case $EVENT in
         $CURL -s --fail-with-body -XPUT \
             -H "session-id: $SESSION_ID" \
             -H "Content-Type: text/plain" \
-            {{ config.api.url }}/shm/v1/storage/manage/vpn \
+            {{ config.api.url }}/shm/v1/storage/manage/vpn{{ us.id }} \
             --data-binary "$USER_CFG"
         echo "done"
         ;;
@@ -64,7 +64,7 @@ case $EVENT in
         $WG_MANAGER -u "{{ us.id }}" -d
         $CURL -s --fail-with-body -XDELETE \
             -H "session-id: $SESSION_ID" \
-            {{ config.api.url }}/shm/v1/storage/manage/vpn
+            {{ config.api.url }}/shm/v1/storage/manage/vpn{{ us.id }}
         echo "done"
         ;;
     *)
