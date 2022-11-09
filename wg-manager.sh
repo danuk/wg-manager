@@ -89,6 +89,8 @@ PublicKey = ${USER_PUB_KEY}
 AllowedIPs = ${USER_IP}
 # END ${USER}
 EOF
+
+    ip -4 route add ${USER_IP}/32 dev ${SERVER_NAME}
 }
 
 function remove_user_from_server {
