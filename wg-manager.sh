@@ -90,11 +90,12 @@ AllowedIPs = ${USER_IP}
 # END ${USER}
 EOF
 
-    ip -4 route add ${USER_IP}/32 dev ${SERVER_NAME}
+    ip -4 route add ${USER_IP}/32 dev ${SERVER_NAME} || true
 }
 
 function remove_user_from_server {
     sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "${HOME_DIR}/$SERVER_NAME.conf"
+    ip -4 route del ${USER_IP}/32 dev ${SERVER_NAME} || true
 }
 
 function init {
