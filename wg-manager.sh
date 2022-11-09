@@ -75,7 +75,7 @@ function add_user_to_server {
     fi
 
     local USER_PUB_KEY=$(cat "keys/${USER}/public.key")
-    local USER_IP=$( get_new_ip )
+    local USER_IP=$(grep -i Address "keys/${USER}/${USER}.conf" | sed 's/Address\s*=\s*//i; s/\/.*//')
 
     if grep "# BEGIN ${USER}$" "$HOME_DIR/$SERVER_NAME.conf" >/dev/null ; then
         echo "User already exists"
