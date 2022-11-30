@@ -77,12 +77,12 @@ function add_user_to_server {
     local USER_PUB_KEY=$(cat "keys/${USER}/public.key")
     local USER_IP=$(grep -i Address "keys/${USER}/${USER}.conf" | sed 's/Address\s*=\s*//i; s/\/.*//')
 
-    if grep "# BEGIN ${USER}$" "$HOME_DIR/$SERVER_NAME.conf" >/dev/null ; then
+    if grep "# BEGIN ${USER}$" "$SERVER_NAME.conf" >/dev/null ; then
         echo "User already exists"
         exit 0
     fi
 
-cat <<EOF >> "$HOME_DIR/$SERVER_NAME.conf"
+cat <<EOF >> "$SERVER_NAME.conf"
 # BEGIN ${USER}
 [Peer]
 PublicKey = ${USER_PUB_KEY}
@@ -94,11 +94,11 @@ EOF
 }
 
 function remove_user_from_server {
-    sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "${HOME_DIR}/$SERVER_NAME.conf"
-    if [ -f "${HOME_DIR}/keys/${USER}/${USER}.conf" ]; then
+    sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "$SERVER_NAME.conf"
+    if [ -f "keys/${USER}/${USER}.conf" ]; then
         local USER_IP=$(grep -i Address "keys/${USER}/${USER}.conf" | sed 's/Address\s*=\s*//i; s/\/.*//')
         ip -4 route del ${USER_IP}/32 dev ${SERVER_NAME} || true
-        rm -rf "${HOME_DIR}/keys/${USER}"
+        rm -rf "keys/${USER}"
     fi
 }
 
@@ -108,7 +108,7 @@ function init {
         exit 1
     fi
 
-    mkdir -p "$HOME_DIR/keys/${SERVER_NAME}"
+    mkdir -p "keys/${SERVER_NAME}"
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
     if [ -f "keys/${SERVER_NAME}/private.key" ]; then
@@ -122,7 +122,7 @@ function init {
 
     SERVER_PVT_KEY=$(cat "keys/$SERVER_NAME/private.key")
 
-cat <<EOF > "${HOME_DIR}/$SERVER_NAME.conf"
+cat <<EOF > "$SERVER_NAME.conf"
 [Interface]
 Address = ${SERVER_IP_PREFIX}.1/32
 ListenPort = ${SERVER_PORT}
@@ -143,7 +143,7 @@ EOF
 }
 
 function create {
-    if [ -f "${HOME_DIR}/keys/${USER}/${USER}.conf" ]; then
+    if [ -f "keys/${USER}/${USER}.conf" ]; then
         echo "ERROR: user already exists" >&2
         exit 1
     fi
@@ -158,7 +158,7 @@ function create {
     USER_PUB_KEY=$(cat "keys/${USER}/public.key")
     SERVER_PUB_KEY=$(cat "keys/$SERVER_NAME/public.key")
 
-cat <<EOF > "${HOME_DIR}/keys/${USER}/${USER}.conf"
+cat <<EOF > "keys/${USER}/${USER}.conf"
 [Interface]
 Address = ${USER_IP}
 PrivateKey = ${USER_PVT_KEY}
@@ -215,9 +215,9 @@ if [ $UNLOCK ]; then
 fi
 
 if [ $PRINT_USER_CONFIG ]; then
-    cat "${HOME_DIR}/keys/${USER}/${USER}.conf"
+    cat "keys/${USER}/${USER}.conf"
 elif [ $PRINT_QR_CODE ]; then
-    qrencode -t ansiutf8 < "${HOME_DIR}/keys/${USER}/${USER}.conf"
+    qrencode -t ansiutf8 < "keys/${USER}/${USER}.conf"
 fi
 
 exit 0
