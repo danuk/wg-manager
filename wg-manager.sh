@@ -95,7 +95,11 @@ EOF
 
 function remove_user_from_server {
     sed -i "/# BEGIN ${USER}$/,/# END ${USER}$/d" "${HOME_DIR}/$SERVER_NAME.conf"
-    ip -4 route del ${USER_IP}/32 dev ${SERVER_NAME} || true
+    if [ -f "${HOME_DIR}/keys/${USER}/${USER}.conf" ]; then
+        local USER_IP=$(grep -i Address "keys/${USER}/${USER}.conf" | sed 's/Address\s*=\s*//i; s/\/.*//')
+        ip -4 route del ${USER_IP}/32 dev ${SERVER_NAME} || true
+        rm -rf "${HOME_DIR}/keys/${USER}"
+    fi
 }
 
 function init {
@@ -193,7 +197,6 @@ if [ $CREATE ]; then
 fi
 
 if [ $DELETE ]; then
-    rm -rf "${HOME_DIR}/keys/${USER}"
     remove_user_from_server
     reload_server
     exit 0
