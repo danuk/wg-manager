@@ -126,6 +126,7 @@ cat <<EOF > "$SERVER_NAME.conf"
 Address = ${SERVER_IP_PREFIX}.1/32
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PVT_KEY}
+PostUp = iptables -P FORWARD ACCEPT
 PostUp = iptables -t nat -A POSTROUTING -o ${SERVER_INTERFACE} -j MASQUERADE
 PostDown = iptables -t nat -D POSTROUTING -o ${SERVER_INTERFACE} -j MASQUERADE
 
