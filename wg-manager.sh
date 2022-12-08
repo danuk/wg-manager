@@ -21,7 +21,7 @@ function usage {
   echo " -q : Print user QR code"
   echo " -u <user> : User identifier (uniq field for vpn account)"
   echo " -s <server> : Server host for user connection"
-  echo " -I : Interface (default eth0)"
+  echo " -I : Interface (default auto)"
   echo " -h : Usage"
   exit 1
 }
@@ -33,7 +33,7 @@ HOME_DIR="/etc/wireguard"
 SERVER_NAME="wg-server"
 SERVER_IP_PREFIX="10.10.10"
 SERVER_PORT=39547
-SERVER_INTERFACE="eth0" # ens4
+SERVER_INTERFACE=$(route | grep default | awk '{print $8}')
 
 while getopts ":icdpqhLUu:I:s:" opt; do
   case $opt in
@@ -108,6 +108,8 @@ function init {
         echo "ERROR: Server required" >&2
         exit 1
     fi
+
+    echo "Interface: $SERVER_INTERFACE"
 
     mkdir -p "keys/${SERVER_NAME}"
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
