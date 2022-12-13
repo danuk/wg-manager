@@ -33,7 +33,7 @@ HOME_DIR="/etc/wireguard"
 SERVER_NAME="wg-server"
 SERVER_IP_PREFIX="10.10.10"
 SERVER_PORT=39547
-SERVER_INTERFACE=$(ip route | grep default | sed 's/.* dev //;s/ .*//')
+SERVER_INTERFACE=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
 
 while getopts ":icdpqhLUu:I:s:" opt; do
   case $opt in
