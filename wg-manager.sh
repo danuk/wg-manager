@@ -109,6 +109,13 @@ function init {
         exit 1
     fi
 
+    if [ -z "$SERVER_INTERFACE" ]; then
+        echo "ERROR: Can't determine server interface" >&2
+        echo "DEBUG: 'ip route':"
+        ip route
+        exit 1
+    fi
+
     echo "Interface: $SERVER_INTERFACE"
 
     mkdir -p "keys/${SERVER_NAME}"
