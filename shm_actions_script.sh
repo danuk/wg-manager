@@ -26,6 +26,8 @@ case $EVENT in
 
         apt update
         apt install -y \
+            iproute2 \
+            iptables \
             wireguard \
             wireguard-tools \
             qrencode \
