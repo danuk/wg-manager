@@ -11,10 +11,13 @@ Options:
  -i : Init (Create server keys and configs)
  -c : Create new user
  -d : Delete user
+ -L : Lock user
+ -U : Unlock user
  -p : Print user config
  -q : Print user QR code
  -u <user> : User identifier (uniq field for vpn account)
  -s <server> : Server host for user connection
+ -I : Interface (default auto)
  -h : Usage
  ```
 
