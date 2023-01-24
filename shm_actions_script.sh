@@ -5,6 +5,7 @@ set -e
 EVENT="{{ event_name }}"
 WG_MANAGER="/etc/wireguard/wg-manager.sh"
 SESSION_ID="{{ user.gen_session.id }}"
+API_URL="{{ config.api.url }}"
 
 # We need the --fail-with-body option for curl.
 # It has been added since curl 7.76.0, but almost all Linux distributions do not support it yet.
@@ -21,6 +22,13 @@ case $EVENT in
         SERVER_INTERFACE="{{ server.settings.host_interface }}"
         if [ -z $SERVER_HOST ]; then
             echo "ERROR: set variable 'host_name' to server settings"
+            exit 1
+        fi
+
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/shm/v1/test)
+        if [ $CODE -ne '200' ]; then
+            echo "ERROR: incorrect API URL: $API_URL"
+            echo "Got status: $CODE"
             exit 1
         fi
 
@@ -55,7 +63,7 @@ case $EVENT in
         $CURL -s --fail-with-body -XPUT \
             -H "session-id: $SESSION_ID" \
             -H "Content-Type: text/plain" \
-            {{ config.api.url }}/shm/v1/storage/manage/vpn{{ us.id }} \
+            $API_URL/shm/v1/storage/manage/vpn{{ us.id }} \
             --data-binary "$USER_CFG"
         echo "done"
         ;;
@@ -71,7 +79,7 @@ case $EVENT in
         $WG_MANAGER -u "{{ us.id }}" -d
         $CURL -s --fail-with-body -XDELETE \
             -H "session-id: $SESSION_ID" \
-            {{ config.api.url }}/shm/v1/storage/manage/vpn{{ us.id }}
+            $API_URL/shm/v1/storage/manage/vpn{{ us.id }}
         echo "done"
         ;;
     *)
