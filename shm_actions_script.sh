@@ -28,7 +28,7 @@ case $EVENT in
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/shm/v1/test)
         if [ $HTTP_CODE -ne '200' ]; then
             echo "ERROR: incorrect API URL: $API_URL"
-            echo "Got status: $CODE"
+            echo "Got status: $HTTP_CODE"
             exit 1
         fi
 
