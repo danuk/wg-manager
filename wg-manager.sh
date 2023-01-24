@@ -151,8 +151,8 @@ EOF
 
 function create {
     if [ -f "keys/${USER}/${USER}.conf" ]; then
-        echo "ERROR: user already exists" >&2
-        exit 1
+        echo "WARNING: key ${USER}.conf already exists" >&2
+        return 0
     fi
 
     SERVER_ENDPOINT=$(cat "keys/.server")
