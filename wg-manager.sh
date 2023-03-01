@@ -135,6 +135,11 @@ function init {
         wg genkey | tee "keys/${SERVER_NAME}/private.key" | wg pubkey > "keys/${SERVER_NAME}/public.key"
     fi
 
+    if [ -f "$SERVER_NAME.conf" ]; then
+        echo "Server already initialized"
+        exit 0
+    fi
+
     SERVER_PVT_KEY=$(cat "keys/$SERVER_NAME/private.key")
 
 cat <<EOF > "$SERVER_NAME.conf"
