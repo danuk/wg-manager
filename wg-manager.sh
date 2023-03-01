@@ -60,14 +60,24 @@ function reload_server {
 }
 
 function get_new_ip {
-    LAST_IP=$[$(cat "keys/.last_ip") + 1]
-    if [ $LAST_IP -gt 255 ]; then
+    declare -A IP_EXISTS
+
+    for IP in $(grep -i 'Address\s*=\s*' keys/*/*.conf | sed 's/\/[0-9]\+$//' | grep -Po '\d+$')
+    do
+        IP_EXISTS[$IP]=1
+    done
+
+    for IP in {2..255}
+    do
+        [ ${IP_EXISTS[$IP]} ] || break
+    done
+
+    if [ $IP -eq 255 ]; then
         echo "ERROR: can't determine new address" >&2
         exit 3
     fi
 
-    echo -n "${LAST_IP}" > "keys/.last_ip"
-    echo "${SERVER_IP_PREFIX}.${LAST_IP}/32"
+    echo "${SERVER_IP_PREFIX}.${IP}/32"
 }
 
 function add_user_to_server {
@@ -122,7 +132,6 @@ function init {
     echo -n "$SERVER_ENDPOINT" > "keys/.server"
 
     if [ ! -f "keys/${SERVER_NAME}/private.key" ]; then
-        echo -n "1" > "keys/.last_ip"
         wg genkey | tee "keys/${SERVER_NAME}/private.key" | wg pubkey > "keys/${SERVER_NAME}/public.key"
     fi
 
