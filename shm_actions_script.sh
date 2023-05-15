@@ -24,15 +24,7 @@ case $EVENT in
             echo "ERROR: set variable 'host_name' to server settings"
             exit 1
         fi
-
-        echo "Check domain: $API_URL"
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/shm/v1/test)
-        if [ $HTTP_CODE -ne '200' ]; then
-            echo "ERROR: incorrect API URL: $API_URL"
-            echo "Got status: $HTTP_CODE"
-            exit 1
-        fi
-
+        
         echo "Install required packages"
         apt update
         apt install -y \
@@ -41,7 +33,16 @@ case $EVENT in
             wireguard \
             wireguard-tools \
             qrencode \
+            curl \
             wget
+            
+        echo "Check domain: $API_URL"
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/shm/v1/test)
+        if [ $HTTP_CODE -ne '200' ]; then
+            echo "ERROR: incorrect API URL: $API_URL"
+            echo "Got status: $HTTP_CODE"
+            exit 1
+        fi
 
         if [[ $CURL_REPO && ! -f $CURL ]]; then
             echo "Install modern curl"
