@@ -175,11 +175,6 @@ function restore {
         exit 1
     fi
 
-    if grep -qs "# BEGIN ${USER}$" "$SERVER_NAME.conf"; then
-        echo "ERROR: User ${USER} already exists in $SERVER_NAME.conf" >&2
-        exit 1
-    fi
-
     if [ -z "$USER_PVT_KEY_ARG" ]; then
         echo "ERROR: User private key required (-k USER_PRIVATE_KEY)" >&2
         exit 1
