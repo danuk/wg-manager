@@ -14,6 +14,7 @@ function usage {
   echo "Options:"
   echo " -i : Init (Create server keys and configs)"
   echo " -c : Create new user"
+  echo " -r : Restore user from existing private key (see -a, -k)"
   echo " -d : Delete user"
   echo " -L : Lock user"
   echo " -U : Unlock user"
@@ -21,6 +22,8 @@ function usage {
   echo " -q : Print user QR code"
   echo " -u <user> : User identifier (uniq field for vpn account)"
   echo " -s <server> : Server host for user connection"
+  echo " -a <ip> : User IP address (for restore, default: next free)"
+  echo " -k <key> : User private key (for restore)"
   echo " -I : Interface (default auto)"
   echo " -h : Usage"
   exit 1
@@ -35,10 +38,13 @@ SERVER_IP_PREFIX="10.10.10"
 SERVER_PORT=39547
 SERVER_INTERFACE=$(ip -4 route ls | grep default | grep -Po '(?<=dev )(\S+)' | head -1)
 
-while getopts ":icdpqhLUu:I:s:" opt; do
+while getopts ":icrdpqhLUu:I:s:a:k:" opt; do
   case $opt in
      i) INIT=1 ;;
      c) CREATE=1 ;;
+     r) RESTORE=1 ;;
+     a) USER_IP_ARG="$OPTARG" ;;
+     k) USER_PVT_KEY_ARG="$OPTARG" ;;
      d) DELETE=1 ;;
      L) LOCK=1 ;;
      U) UNLOCK=1 ;;
@@ -163,6 +169,71 @@ EOF
     exit 0
 }
 
+function restore {
+    if [ -d "keys/${USER}" ]; then
+        echo "ERROR: User ${USER} already exists" >&2
+        exit 1
+    fi
+
+    if grep -qs "# BEGIN ${USER}$" "$SERVER_NAME.conf"; then
+        echo "ERROR: User ${USER} already exists in $SERVER_NAME.conf" >&2
+        exit 1
+    fi
+
+    if [ -z "$USER_PVT_KEY_ARG" ]; then
+        echo "ERROR: User private key required (-k USER_PRIVATE_KEY)" >&2
+        exit 1
+    fi
+
+    local USER_PVT_KEY="$USER_PVT_KEY_ARG"
+    local USER_PUB_KEY
+    if ! USER_PUB_KEY=$(echo "$USER_PVT_KEY" | wg pubkey 2>/dev/null) || [ -z "$USER_PUB_KEY" ]; then
+        echo "ERROR: Invalid user private key" >&2
+        exit 1
+    fi
+
+    local USER_IP
+    if [ -n "$USER_IP_ARG" ]; then
+        local IP_ONLY="${USER_IP_ARG%%/*}"
+        local IP_RE="^${SERVER_IP_PREFIX//./\\.}\.([0-9]+)$"
+        if [[ ! $IP_ONLY =~ $IP_RE ]] || [ ${BASH_REMATCH[1]} -lt 2 ] || [ ${BASH_REMATCH[1]} -gt 254 ]; then
+            echo "ERROR: Invalid IP address: $USER_IP_ARG (expected ${SERVER_IP_PREFIX}.2-254)" >&2
+            exit 1
+        fi
+
+        if grep -qsE "^Address\s*=\s*${IP_ONLY//./\\.}/" keys/*/*.conf; then
+            echo "ERROR: IP address $IP_ONLY already in use" >&2
+            exit 1
+        fi
+        USER_IP="${IP_ONLY}/32"
+    else
+        USER_IP=$( get_new_ip )
+    fi
+
+    if [ -z "$SERVER_ENDPOINT" ]; then
+        SERVER_ENDPOINT=$(cat "keys/.server")
+    fi
+    local SERVER_PUB_KEY=$(cat "keys/$SERVER_NAME/public.key")
+
+    mkdir -p "keys/${USER}"
+    echo "$USER_PVT_KEY" > "keys/${USER}/private.key"
+    echo "$USER_PUB_KEY" > "keys/${USER}/public.key"
+
+cat <<EOF > "keys/${USER}/${USER}.conf"
+[Interface]
+Address = ${USER_IP}
+PrivateKey = ${USER_PVT_KEY}
+DNS = 8.8.8.8
+
+[Peer]
+PublicKey = ${SERVER_PUB_KEY}
+Endpoint = ${SERVER_ENDPOINT}:${SERVER_PORT}
+PersistentKeepalive = 20
+AllowedIPs = 0.0.0.0/0
+EOF
+
+}
+
 function create {
     if [ -f "keys/${USER}/${USER}.conf" ]; then
         echo "WARNING: key ${USER}.conf already exists" >&2
@@ -215,6 +286,10 @@ fi
 
 if [ $CREATE ]; then
     create
+fi
+
+if [ $RESTORE ]; then
+    restore
 fi
 
 if [ $DELETE ]; then
